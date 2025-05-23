@@ -1,0 +1,68 @@
+name: .NET
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+  workflow_dispatch:
+    inputs:
+      dd_trace_repo:
+        description: "DD-Trace repository (org/repo)"
+        required: false
+        default: "DataDog/dd-trace-dotnet"
+      dd_trace_branch:
+        description: "Branch in dd-trace-dotnet fork to test"
+        required: true
+        default: "master"
+
+env:
+  DD_TRACE_BRANCH: ${{ github.event.inputs.dd_trace_branch || 'master' }}
+  DD_TRACE_REPO: ${{ github.event.inputs.dd_trace_repo || 'DataDog/dd-trace-dotnet' }}
+  DD_ENV: ci
+  DD_SERVICE: testing-playground
+  DD_VERSION: ${{ github.sha }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Clone and build DD-Trace
+        run: |
+          echo "Cloning DD-Trace from $DD_TRACE_REPO branch $DD_TRACE_BRANCH"
+          git clone https://github.com/$DD_TRACE_REPO.git dd-trace-dotnet
+          cd dd-trace-dotnet
+          git checkout $DD_TRACE_BRANCH
+
+          # Build the tracer
+          ./build.sh BuildTracerHome
+
+           # Set environment variables for the tracer
+          echo "DD_DOTNET_TRACER_HOME=$PWD/tracer-home" >> $GITHUB_ENV
+          echo "CORECLR_ENABLE_PROFILING=1" >> $GITHUB_ENV
+          echo "CORECLR_PROFILER={846F5F1C-F9AE-4B07-969E-05C26BC060D8}" >> $GITHUB_ENV
+          echo "CORECLR_PROFILER_PATH=$PWD/tracer-home/Datadog.Trace.ClrProfiler.Native.so" >> $GITHUB_ENV
+          echo "DD_TRACE_ENABLED=true" >> $GITHUB_ENV
+          echo "DD_LOGS_INJECTION=true" >> $GITHUB_ENV
+          echo "DD_PROFILING_ENABLED=false" >> $GITHUB_ENV
+
+          # Enable CI visibility
+          echo "DD_CIVISIBILITY_ENABLED=true" >> $GITHUB_ENV
+          echo "DD_CIVISIBILITY_AGENTLESS_ENABLED=true" >> $GITHUB_ENV
+
+          # Log to console for debugging
+          echo "DD_TRACE_DEBUG=true" >> $GITHUB_ENV
+
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build --no-restore
+      - name: Test
+        run: dotnet test --no-build --verbosity normal
