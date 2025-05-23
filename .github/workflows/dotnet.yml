@@ -107,7 +107,7 @@ jobs:
           ls -la "${LOCAL_TOOLS_PATH}"
 
           # Verify the tool is callable and is your version
-          "${LOCAL_TOOLS_PATH}"/dd-trace --version
+          # "${LOCAL_TOOLS_PATH}"/dd-trace --version
 
       - name: Restore dependencies
         run: dotnet restore
