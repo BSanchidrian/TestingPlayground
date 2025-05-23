@@ -22,6 +22,8 @@ env:
   DD_ENV: ci
   DD_SERVICE: testing-playground
   DD_VERSION: ${{ github.sha }}
+  DD_CIVISIBILITY_IMPACTED_TESTS_DETECTION_ENABLED: true
+  DD_TRACE_DEBUG: true
 
 jobs:
   build:
