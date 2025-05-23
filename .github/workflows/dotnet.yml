@@ -29,6 +29,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -48,9 +49,12 @@ jobs:
           # Build the tracer using Nuke
           chmod +x build.sh
           ./build.sh Clean BuildTracerHome
+          ./build.sh PackageTracerHome
 
-          # The tracer home should be in tracer/bin/tracer-home
-          echo "DD_DOTNET_TRACER_HOME=$PWD/bin/tracer-home" >> $GITHUB_ENV
+          # Path to the directory containing the generated .nupkg
+          # This path is relative to the 'tracer' directory
+          echo "DD_TRACE_NUPKG_DIR_PATH=$PWD/bin/artifacts/nuget" >> $GITHUB_ENV
+          echo "Nupkg directory will be: $PWD/bin/artifacts/nuget"     
 
           # Set environment variables for the tracer
           echo "CORECLR_ENABLE_PROFILING=1" >> $GITHUB_ENV
@@ -76,13 +80,38 @@ jobs:
           # Log to console for debugging
           echo "DD_TRACE_DEBUG=true" >> $GITHUB_ENV
 
-          # Show final configuration
-          echo "=== DD-Trace Configuration ==="
-          echo "DD_DOTNET_TRACER_HOME: $PWD/bin/tracer-home"
-          ls -la "$PWD/bin/tracer-home" || echo "Tracer home not found"
+      - name: Install custom dd-trace tool
+        run: |
+          mkdir -p ./.local-tools
+          LOCAL_TOOLS_PATH="$PWD/.local-tools"
+          # DD_TRACE_NUPKG_DIR_PATH is an absolute path from the previous step
+          echo "Installing dd-trace tool from ${DD_TRACE_NUPKG_DIR_PATH}"
+
+          # List files to debug which nupkg is available
+          ls -l "${DD_TRACE_NUPKG_DIR_PATH}"
+
+          # Install the specific tool package. The package ID is Datadog.Trace.Tools.dd_trace
+          # The --add-source needs to point to the directory containing the .nupkg
+          # The tool install command will pick the .nupkg from the source
+          dotnet tool install --tool-path "${LOCAL_TOOLS_PATH}" --add-source "${DD_TRACE_NUPKG_DIR_PATH}" dd-trace
+
+          echo "${LOCAL_TOOLS_PATH}" >> $GITHUB_PATH # Add local tools directory to PATH for this job
+          echo "Custom dd-trace tool installed to ${LOCAL_TOOLS_PATH}"
+          ls -la "${LOCAL_TOOLS_PATH}"
+
+          # Verify the tool is callable and is your version
+          dd-trace --version
+
       - name: Restore dependencies
         run: dotnet restore
       - name: Build
         run: dotnet build --no-restore
       - name: Test
-        run: dotnet test --no-build --verbosity normal
+        run: |
+          echo "--- Running Tests with Custom dd-trace ---"
+          echo "Datadog Service: ${DD_SERVICE}"
+          echo "Datadog Env: ${DD_ENV}"
+          echo "Datadog Version: ${DD_VERSION}"
+          echo "Datadog Site: ${{ secrets.DD_SITE || 'datadoghq.com' }}"
+
+          dd-trace ci run -- dotnet test --no-build --verbosity normal
