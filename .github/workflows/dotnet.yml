@@ -121,4 +121,4 @@ jobs:
           echo "Datadog Version: ${DD_VERSION}"
           echo "Datadog Site: ${{ secrets.DD_SITE || 'datadoghq.com' }}"
 
-          "${LOCAL_TOOLS_PATH}"/dd-trace ci run -- dotnet test --no-build --verbosity normal
+          "$(pwd)/.local-tools/dd-trace" ci run -- dotnet test --no-build --verbosity normal
