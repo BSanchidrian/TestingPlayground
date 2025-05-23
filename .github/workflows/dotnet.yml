@@ -41,19 +41,19 @@ jobs:
         run: |
           echo "Cloning DD-Trace from $DD_TRACE_REPO branch $DD_TRACE_BRANCH"
           set -x
-          git clone https://github.com/$DD_TRACE_REPO.git dd-trace-dotnet
-          cd dd-trace-dotnet
-          git checkout $DD_TRACE_BRANCH
+          # git clone https://github.com/$DD_TRACE_REPO.git dd-trace-dotnet
+          # cd dd-trace-dotnet
+          # git checkout $DD_TRACE_BRANCH
 
-          # Install dependencies
-          echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list
-          sudo apt update
-          sudo apt install -y nfpm build-essential cmake cppcheck clang-tidy patchelf
+          # # Install dependencies
+          # echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list
+          # sudo apt update
+          # sudo apt install -y nfpm build-essential cmake cppcheck clang-tidy patchelf
 
-          # Navigate to the tracer directory where the build scripts are located
-          cd tracer
+          # # Navigate to the tracer directory where the build scripts are located
+          # cd tracer
 
-          # Build the tracer using Nuke
+          # # Build the tracer using Nuke
           # chmod +x build.sh
           # ./build.sh Clean BuildTracerHome
           # ./build.sh PackageTracerHome
