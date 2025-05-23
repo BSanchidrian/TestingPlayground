@@ -58,10 +58,10 @@ jobs:
           # ./build.sh Clean BuildTracerHome
           # ./build.sh PackageTracerHome
 
-          # Path to the directory containing the generated .nupkg
-          # This path is relative to the 'tracer' directory
-          echo "DD_TRACE_NUPKG_DIR_PATH=$PWD/bin/artifacts/nuget" >> $GITHUB_ENV
-          echo "Nupkg directory will be: $PWD/bin/artifacts/nuget"     
+          # # Path to the directory containing the generated .nupkg
+          # # This path is relative to the 'tracer' directory
+          # echo "DD_TRACE_NUPKG_DIR_PATH=$PWD/bin/artifacts/nuget" >> $GITHUB_ENV
+          # echo "Nupkg directory will be: $PWD/bin/artifacts/nuget"     
 
           # Set environment variables for the tracer
           echo "CORECLR_ENABLE_PROFILING=1" >> $GITHUB_ENV
