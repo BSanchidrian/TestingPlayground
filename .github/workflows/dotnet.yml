@@ -45,8 +45,8 @@ jobs:
 
           # Install dependencies
           echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list
-          apt update
-          apt install nfpm
+          sudo apt update
+          sudo apt install nfpm
 
           # Navigate to the tracer directory where the build scripts are located
           cd tracer
