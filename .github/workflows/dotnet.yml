@@ -52,11 +52,11 @@ jobs:
 
           # Navigate to the tracer directory where the build scripts are located
           cd tracer
-          ls
+
           # Build the tracer using Nuke
-          chmod +x build.sh
-          ./build.sh Clean BuildTracerHome
-          ./build.sh PackageTracerHome
+          # chmod +x build.sh
+          # ./build.sh Clean BuildTracerHome
+          # ./build.sh PackageTracerHome
 
           # Path to the directory containing the generated .nupkg
           # This path is relative to the 'tracer' directory
@@ -89,6 +89,7 @@ jobs:
 
       - name: Install custom dd-trace tool
         run: |
+          echo "DD_TRACE_NUPKG_DIR_PATH=$PWD" >> $GITHUB_ENV
           mkdir -p ./.local-tools
           LOCAL_TOOLS_PATH="$PWD/.local-tools"
           # DD_TRACE_NUPKG_DIR_PATH is an absolute path from the previous step
