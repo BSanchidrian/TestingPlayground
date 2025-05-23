@@ -89,19 +89,18 @@ jobs:
 
       - name: Install custom dd-trace tool
         run: |
-          echo "DD_TRACE_NUPKG_DIR_PATH=$PWD" >> $GITHUB_ENV
           mkdir -p ./.local-tools
           LOCAL_TOOLS_PATH="$PWD/.local-tools"
           # DD_TRACE_NUPKG_DIR_PATH is an absolute path from the previous step
-          echo "Installing dd-trace tool from ${DD_TRACE_NUPKG_DIR_PATH}"
+          echo "Installing dd-trace tool from $(pwd)"
 
           # List files to debug which nupkg is available
-          ls -l "${DD_TRACE_NUPKG_DIR_PATH}"
+          ls -l "$(pwd)"
 
           # Install the specific tool package. The package ID is Datadog.Trace.Tools.dd_trace
           # The --add-source needs to point to the directory containing the .nupkg
           # The tool install command will pick the .nupkg from the source
-          dotnet tool install --tool-path "${LOCAL_TOOLS_PATH}" --add-source "${DD_TRACE_NUPKG_DIR_PATH}" dd-trace
+          dotnet tool install --tool-path "${LOCAL_TOOLS_PATH}" --add-source "$(pwd)" dd-trace
 
           echo "${LOCAL_TOOLS_PATH}" >> $GITHUB_PATH # Add local tools directory to PATH for this job
           echo "Custom dd-trace tool installed to ${LOCAL_TOOLS_PATH}"
