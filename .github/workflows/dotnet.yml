@@ -33,7 +33,9 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: |
+            8.0.x
+            9.0.x
 
       - name: Clone and build DD-Trace
         run: |
@@ -53,8 +55,8 @@ jobs:
           ls
           # Build the tracer using Nuke
           chmod +x build.sh
-          sudo ./build.sh Clean BuildTracerHome
-          sudo ./build.sh PackageTracerHome
+          ./build.sh Clean BuildTracerHome
+          ./build.sh PackageTracerHome
 
           # Path to the directory containing the generated .nupkg
           # This path is relative to the 'tracer' directory
