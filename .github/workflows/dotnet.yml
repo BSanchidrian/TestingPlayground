@@ -72,6 +72,7 @@ jobs:
           echo "DD_TRACE_ENABLED=true" >> $GITHUB_ENV
           echo "DD_LOGS_INJECTION=true" >> $GITHUB_ENV
           echo "DD_PROFILING_ENABLED=false" >> $GITHUB_ENV
+          echo "DD_TRACE_DEBUG=true" >> $GITHUB_ENV
 
           # Enable CI visibility
           echo "DD_CIVISIBILITY_ENABLED=true" >> $GITHUB_ENV
