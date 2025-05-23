@@ -37,18 +37,25 @@ jobs:
       - name: Clone and build DD-Trace
         run: |
           echo "Cloning DD-Trace from $DD_TRACE_REPO branch $DD_TRACE_BRANCH"
+          set -x
           git clone https://github.com/$DD_TRACE_REPO.git dd-trace-dotnet
           cd dd-trace-dotnet
           git checkout $DD_TRACE_BRANCH
 
-          # Build the tracer
-          ./build.sh BuildTracerHome
+          # Navigate to the tracer directory where the build scripts are located
+          cd tracer
+          ls
+          # Build the tracer using Nuke
+          chmod +x build.sh
+          ./build.sh Clean BuildTracerHome
 
-           # Set environment variables for the tracer
-          echo "DD_DOTNET_TRACER_HOME=$PWD/tracer-home" >> $GITHUB_ENV
+          # The tracer home should be in tracer/bin/tracer-home
+          echo "DD_DOTNET_TRACER_HOME=$PWD/bin/tracer-home" >> $GITHUB_ENV
+
+          # Set environment variables for the tracer
           echo "CORECLR_ENABLE_PROFILING=1" >> $GITHUB_ENV
           echo "CORECLR_PROFILER={846F5F1C-F9AE-4B07-969E-05C26BC060D8}" >> $GITHUB_ENV
-          echo "CORECLR_PROFILER_PATH=$PWD/tracer-home/Datadog.Trace.ClrProfiler.Native.so" >> $GITHUB_ENV
+          echo "CORECLR_PROFILER_PATH=$PWD/bin/tracer-home/Datadog.Trace.ClrProfiler.Native.so" >> $GITHUB_ENV
           echo "DD_TRACE_ENABLED=true" >> $GITHUB_ENV
           echo "DD_LOGS_INJECTION=true" >> $GITHUB_ENV
           echo "DD_PROFILING_ENABLED=false" >> $GITHUB_ENV
@@ -57,9 +64,22 @@ jobs:
           echo "DD_CIVISIBILITY_ENABLED=true" >> $GITHUB_ENV
           echo "DD_CIVISIBILITY_AGENTLESS_ENABLED=true" >> $GITHUB_ENV
 
+          # Set API key if available
+          if [ -n "${{ secrets.DD_API_KEY }}" ]; then
+            echo "DD_API_KEY=${{ secrets.DD_API_KEY }}" >> $GITHUB_ENV
+            echo "DD_SITE=${{ secrets.DD_SITE || 'datadoghq.com' }}" >> $GITHUB_ENV
+            echo "API key configured, traces will be sent to Datadog"
+          else
+            echo "No API key found, running in local mode only"
+          fi
+
           # Log to console for debugging
           echo "DD_TRACE_DEBUG=true" >> $GITHUB_ENV
 
+          # Show final configuration
+          echo "=== DD-Trace Configuration ==="
+          echo "DD_DOTNET_TRACER_HOME: $PWD/bin/tracer-home"
+          ls -la "$PWD/bin/tracer-home" || echo "Tracer home not found"
       - name: Restore dependencies
         run: dotnet restore
       - name: Build
