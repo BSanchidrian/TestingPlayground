@@ -22,8 +22,12 @@ env:
   DD_ENV: ci
   DD_SERVICE: testing-playground
   DD_VERSION: ${{ github.sha }}
+  DD_CIVISIBILITY_ENABLED: true
+  DD_CIVISIBILITY_AGENTLESS_ENABLED: true
   DD_CIVISIBILITY_IMPACTED_TESTS_DETECTION_ENABLED: true
   DD_TRACE_DEBUG: true
+  DD_API_KEY: ${{ secrets.DD_API_KEY }}
+  DD_SITE: ${{ secrets.DD_SITE || 'datadoghq.com' }}
 
 jobs:
   build:
@@ -43,27 +47,29 @@ jobs:
         run: |
           echo "Cloning DD-Trace from $DD_TRACE_REPO branch $DD_TRACE_BRANCH"
           set -x
-          # git clone https://github.com/$DD_TRACE_REPO.git dd-trace-dotnet
-          # cd dd-trace-dotnet
-          # git checkout $DD_TRACE_BRANCH
+          git clone https://github.com/$DD_TRACE_REPO.git dd-trace-dotnet
+          cd dd-trace-dotnet
+          git checkout $DD_TRACE_BRANCH
 
-          # # Install dependencies
-          # echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list
-          # sudo apt update
-          # sudo apt install -y nfpm build-essential cmake cppcheck clang-tidy patchelf
+          # Install dependencies
+          echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list
+          sudo apt update
+          sudo apt install -y nfpm build-essential cmake cppcheck clang-tidy patchelf
 
-          # # Navigate to the tracer directory where the build scripts are located
-          # cd tracer
+          # Navigate to the tracer directory where the build scripts are located
+          cd tracer
 
-          # # Build the tracer using Nuke
-          # chmod +x build.sh
-          # ./build.sh Clean BuildTracerHome
-          # ./build.sh PackageTracerHome
+          # Build the tracer using Nuke
+          chmod +x build.sh
+          ./build.sh Clean BuildTracerHome
+          ./build.sh PackageTracerHome PackRunnerToolNuget
 
-          # # Path to the directory containing the generated .nupkg
-          # # This path is relative to the 'tracer' directory
-          # echo "DD_TRACE_NUPKG_DIR_PATH=$PWD/bin/artifacts/nuget" >> $GITHUB_ENV
-          # echo "Nupkg directory will be: $PWD/bin/artifacts/nuget"     
+          # Path to the directory containing the generated .nupkg
+          # This path is relative to the 'tracer' directory
+          echo "DD_TRACE_NUPKG_DIR_PATH=$PWD/bin/artifacts/nuget" >> $GITHUB_ENV
+          echo "Nupkg directory will be: $PWD/bin/artifacts/nuget"     
+
+          set -x && ls $PWD/bin/artifacts
 
           # Set environment variables for the tracer
           echo "CORECLR_ENABLE_PROFILING=1" >> $GITHUB_ENV
@@ -72,11 +78,6 @@ jobs:
           echo "DD_TRACE_ENABLED=true" >> $GITHUB_ENV
           echo "DD_LOGS_INJECTION=true" >> $GITHUB_ENV
           echo "DD_PROFILING_ENABLED=false" >> $GITHUB_ENV
-          echo "DD_TRACE_DEBUG=true" >> $GITHUB_ENV
-
-          # Enable CI visibility
-          echo "DD_CIVISIBILITY_ENABLED=true" >> $GITHUB_ENV
-          echo "DD_CIVISIBILITY_AGENTLESS_ENABLED=true" >> $GITHUB_ENV
 
           # Set API key if available
           if [ -n "${{ secrets.DD_API_KEY }}" ]; then
@@ -87,23 +88,20 @@ jobs:
             echo "No API key found, running in local mode only"
           fi
 
-          # Log to console for debugging
-          echo "DD_TRACE_DEBUG=true" >> $GITHUB_ENV
-
       - name: Install custom dd-trace tool
         run: |
           mkdir -p ./.local-tools
           LOCAL_TOOLS_PATH="$PWD/.local-tools"
           # DD_TRACE_NUPKG_DIR_PATH is an absolute path from the previous step
-          echo "Installing dd-trace tool from $(pwd)"
+          echo "Installing dd-trace tool from $(DD_TRACE_NUPKG_DIR_PATH)/dd-trace"
 
           # List files to debug which nupkg is available
-          ls -l "$(pwd)"
+          ls -l "$(DD_TRACE_NUPKG_DIR_PATH)/dd-trace"
 
           # Install the specific tool package. The package ID is Datadog.Trace.Tools.dd_trace
           # The --add-source needs to point to the directory containing the .nupkg
           # The tool install command will pick the .nupkg from the source
-          dotnet tool install --tool-path "${LOCAL_TOOLS_PATH}" --add-source "$(pwd)" dd-trace
+          dotnet tool install --tool-path "${LOCAL_TOOLS_PATH}" --add-source "$(DD_TRACE_NUPKG_DIR_PATH)/dd-trace" dd-trace
 
           echo "${LOCAL_TOOLS_PATH}" >> $GITHUB_PATH # Add local tools directory to PATH for this job
           echo "Custom dd-trace tool installed to ${LOCAL_TOOLS_PATH}"
