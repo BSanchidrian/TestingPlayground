@@ -18,7 +18,7 @@ public class CalculatorTests
     [Fact]
     public void Add_SomeNumbers_ShouldWork2()
     {
-        int[] numbers = [1, 2, 11, 1230];
+        int[] numbers = [1, 2, 11, 10];
         var calculator = new Calculator();
 
         var result = calculator.Add(numbers);
